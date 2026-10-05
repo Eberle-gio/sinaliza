@@ -1,0 +1,35 @@
+{
+    "name": "Sinaliza — Treino de Libras",
+    "short_name": "Sinaliza",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#f6f5fb",
+    "theme_color": "#6250b8",
+    "description": "Reconheça sinais de Libras e acompanhe seus treinos.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
