@@ -77,7 +77,7 @@ no console. Nenhuma chave de conta de serviço é necessária no aplicativo.
 por quem usa o projeto. Não há nomes, e-mails nem dados pessoais. As regras permitem
 somente resultados com estrutura restrita, proíbem exclusões e expiram em 31/12/2026.
 Elas não impedem terceiros de criar pontuações falsas: não use como avaliação oficial
-nem publique como serviço privado. Para perfis individuais, adicione autenticação.
+nem publique como serviço privado.
 
 ## Integrações e arquivos para explicar
 
@@ -99,13 +99,6 @@ Os vídeos permanecem no servidor original; a API guarda apenas seus links.
 Catálogo consultado: `public/site/js/palavras.js`; IDs e nomes constam em `api/catalog.mjs`.
 O material serve para reconhecimento inicial e não substitui um curso de Libras.
 
-## Roteiro para cinco minutos
-
-1. **0:00–0:30:** objetivo: reconhecer cinco sinais e registrar o desempenho.
-2. **0:30–2:00:** demonstrar um treino, incluindo um erro e a lista para revisar.
-3. **2:00–3:00:** mostrar GET `/questions` e `QuestionService.fetch`.
-4. **3:00–4:15:** mostrar `ResultService.save` e o documento no Firestore.
-5. **4:15–5:00:** abrir o histórico após recarregar e explicar que usa Firestore, não Realtime.
 
 ## Verificações
 
@@ -118,7 +111,3 @@ flutter build web
 
 Para conferir os links dos vídeos na fonte original: `node api/check-videos.mjs`
 (requer internet; separado dos testes locais).
-
-Para publicar futuramente, hospede a API em HTTPS, configure `APP_ORIGIN` com a origem
-do site e compile com `--dart-define=API_BASE_URL=https://sua-api`. O servidor atual
-escuta somente na máquina local, suficiente para a apresentação no navegador.

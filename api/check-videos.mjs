@@ -1,6 +1,6 @@
 import { catalog } from './catalog.mjs';
 
-// Verificação manual de disponibilidade; não roda nos testes locais da API.
+
 const pending = [...catalog];
 let failed = 0;
 await Promise.all(Array.from({ length: 4 }, async () => {
