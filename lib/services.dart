@@ -35,15 +35,24 @@ class Question {
 }
 
 class QuestionService {
+  static final shared = QuestionService();
+  final http.Client? client;
+  List<String> _previousIds = [];
+  QuestionService({this.client});
   static const baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://localhost:3000',
   );
   // Integração 1: perguntas chegam por HTTP da API Node, fora do Flutter.
   Future<List<Question>> fetch() async {
-    final response = await http
-        .get(Uri.parse('$baseUrl/questions'))
-        .timeout(const Duration(seconds: 12));
+    final uri = Uri.parse('$baseUrl/questions').replace(
+      queryParameters: _previousIds.isEmpty
+          ? null
+          : {'exclude': _previousIds.join(',')},
+    );
+    final response = await (client?.get(uri) ?? http.get(uri)).timeout(
+      const Duration(seconds: 12),
+    );
     if (response.statusCode != 200) throw Exception('API indisponível');
     final data = (jsonDecode(response.body) as List)
         .map((item) => Question.fromJson(item as Map<String, dynamic>))
@@ -53,6 +62,7 @@ class QuestionService {
         'O treino precisa de cinco perguntas distintas',
       );
     }
+    _previousIds = data.map((q) => q.id).toList();
     return data;
   }
 }

@@ -1,12 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
+import 'design.dart';
 import 'firebase_options.dart';
 import 'services.dart';
 import 'signal_video.dart';
-
-const purple = Color(0xff6250b8);
-const ink = Color(0xff292640);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,40 +29,8 @@ class LibrasApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     title: 'Sinaliza • Treino de Libras',
     debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      useMaterial3: true,
-      scaffoldBackgroundColor: const Color(0xfff6f5fb),
-      colorScheme: ColorScheme.fromSeed(seedColor: purple),
-      textTheme: const TextTheme(
-        headlineMedium: TextStyle(color: ink, fontWeight: FontWeight.w800),
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(padding: const EdgeInsets.all(22)),
-      ),
-    ),
+    theme: sinalizaTheme(),
     home: HomePage(results: results),
-  );
-}
-
-class PageFrame extends StatelessWidget {
-  final Widget child;
-  const PageFrame({super.key, required this.child});
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text(
-        'Sinaliza',
-        style: TextStyle(fontWeight: FontWeight.w800),
-      ),
-      backgroundColor: const Color(0xfff6f5fb),
-      centerTitle: false,
-    ),
-    body: Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 900),
-        child: ListView(padding: const EdgeInsets.all(24), children: [child]),
-      ),
-    ),
   );
 }
 
@@ -72,75 +38,18 @@ class HomePage extends StatelessWidget {
   final ResultService results;
   const HomePage({super.key, required this.results});
   @override
-  Widget build(BuildContext context) => PageFrame(
+  Widget build(BuildContext context) => AppShell(
     child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 28),
-        const Chip(
-          avatar: Icon(Icons.waving_hand_outlined),
-          label: Text('SEU PRIMEIRO PASSO EM LIBRAS'),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'Um sinal de cada vez.',
-          style: Theme.of(context).textTheme.headlineMedium
-              ?.copyWith(fontSize: 44),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'Observe os movimentos, escolha o significado e descubra o que revisar.',
-          style: TextStyle(fontSize: 20, height: 1.5),
-        ),
-        const SizedBox(height: 32),
-        const Card(
-          child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Seu treino de hoje',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  '5 sinais do cotidiano • 3 alternativas por pergunta\nAssista quantas vezes precisar. Sem cronômetro.',
-                  style: TextStyle(fontSize: 17, height: 1.6),
-                ),
-              ],
+        WelcomePanel(
+          onStart: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => QuizPage(results: results)),
+          ),
+          onHistory: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => HistoryPage(results: results),
             ),
           ),
-        ),
-        const SizedBox(height: 24),
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            FilledButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => QuizPage(results: results),
-                ),
-              ),
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Iniciar treino'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => HistoryPage(results: results),
-                ),
-              ),
-              icon: const Icon(Icons.bar_chart),
-              label: const Text('Ver desempenho'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 32),
-        const Text(
-          'Vídeos: Dicionário de Libras do INES / Acessibilidade Brasil.\nUm exercício de reconhecimento não substitui um curso de Libras.',
-          style: TextStyle(height: 1.6),
         ),
         if (!results.enabled) ...[
           const SizedBox(height: 20),
@@ -168,7 +77,7 @@ class _QuizPageState extends State<QuizPage> {
   @override
   void initState() {
     super.initState();
-    questions = QuestionService().fetch();
+    questions = QuestionService.shared.fetch();
   }
 
   void next(List<Question> data) {
@@ -189,7 +98,7 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   @override
-  Widget build(BuildContext context) => PageFrame(
+  Widget build(BuildContext context) => AppShell(
     child: FutureBuilder<List<Question>>(
       future: questions,
       builder: (context, snapshot) {
@@ -205,7 +114,7 @@ class _QuizPageState extends State<QuizPage> {
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () => setState(() {
-                  questions = QuestionService().fetch();
+                    questions = QuestionService.shared.fetch();
                 }),
                 child: const Text('Tentar novamente'),
               ),
@@ -217,97 +126,128 @@ class _QuizPageState extends State<QuizPage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'EXERCÍCIO ${answers.length + 1} DE ${data.length}',
-              style: const TextStyle(
-                color: purple,
-                fontWeight: FontWeight.bold,
-              ),
+            const SizedBox(height: 8),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                Pill(
+                  label: 'SINAL ${answers.length + 1} DE ${data.length}',
+                  icon: Icons.sign_language_rounded,
+                ),
+                const Pill(
+                  label: 'No seu ritmo',
+                  color: mint,
+                  icon: Icons.spa_outlined,
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            LinearProgressIndicator(
-              value: answers.length / data.length,
-              minHeight: 6,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Qual é o significado deste sinal?',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 10),
-            const Text('Dê play e observe as mãos, o movimento e a expressão.'),
-            const SizedBox(height: 20),
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
-                child: AspectRatio(
-                  aspectRatio: 4 / 3,
-                  child: SignalVideo(key: ValueKey(q.id), url: q.videoUrl),
+            const SizedBox(height: 18),
+            Semantics(
+              label: 'Pergunta ${answers.length + 1} de ${data.length}',
+              child: Row(
+                children: List.generate(
+                  data.length,
+                  (index) => Expanded(
+                    child: Container(
+                      height: 7,
+                      margin: EdgeInsets.only(
+                        right: index == data.length - 1 ? 0 : 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: index <= answers.length
+                            ? brand
+                            : const Color(0xffe5dded),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
                 ),
               ),
+            ),
+            const SizedBox(height: 28),
+            Text(
+              'O que este sinal quer dizer?',
+              style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 8),
             const Text(
-              'Fonte dos vídeos: INES / Acessibilidade Brasil',
-              textAlign: TextAlign.center,
+              'Observe as mãos, o movimento e a expressão. Depois, escolha uma opção.',
+              style: TextStyle(color: Color(0xff786e86)),
             ),
-            const SizedBox(height: 20),
-            for (var i = 0; i < q.options.length; i++)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.all(20),
-                    backgroundColor: confirmed && i == q.correctIndex
-                        ? const Color(0xffd9f1e5)
-                        : selected == i
-                        ? const Color(0xffe7e0fa)
-                        : Colors.white,
-                    foregroundColor: ink,
-                    disabledForegroundColor: ink,
+            const SizedBox(height: 26),
+            ExerciseStage(
+              video: SignalVideo(key: ValueKey(q.id), url: q.videoUrl),
+              choices: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'QUAL É A SUA ESCOLHA?',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                      color: Color(0xff786e86),
+                    ),
                   ),
-                  onPressed: confirmed
-                      ? null
-                      : () => setState(() => selected = i),
-                  child: Text(
-                    '${String.fromCharCode(65 + i)}. ${q.options[i]}${confirmed && i == q.correctIndex
-                        ? '  ✓ Resposta correta'
-                        : selected == i
-                        ? '  • Sua escolha'
-                        : ''}',
+                  const SizedBox(height: 16),
+                  for (var i = 0; i < q.options.length; i++)
+                    AnswerTile(
+                      index: i,
+                      label: q.options[i],
+                      selected: selected == i,
+                      confirmed: confirmed,
+                      correct: i == q.correctIndex,
+                      onTap: () => setState(() => selected = i),
+                    ),
+                  if (confirmed)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 18),
+                      child: Notice(
+                        selected == q.correctIndex
+                            ? 'Muito bem! Este sinal significa ${q.answer}.'
+                            : 'Faz parte de aprender! Este sinal significa ${q.answer}.',
+                        success: selected == q.correctIndex,
+                      ),
+                    ),
+                  FilledButton.icon(
+                    onPressed: selected == null
+                        ? null
+                        : () {
+                            if (confirmed) {
+                              next(data);
+                            } else {
+                              setState(() => confirmed = true);
+                            }
+                          },
+                    icon: Icon(
+                      confirmed
+                          ? Icons.arrow_forward_rounded
+                          : Icons.check_rounded,
+                      size: 20,
+                    ),
+                    label: Text(
+                      confirmed
+                          ? (answers.length == data.length - 1
+                                ? 'Ver meu resultado'
+                                : 'Próximo sinal')
+                          : 'Confirmar resposta',
+                    ),
                   ),
-                ),
-              ),
-            if (confirmed)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  selected == q.correctIndex
-                      ? 'Você acertou! Este sinal significa ${q.answer}.'
-                      : 'Vamos revisar: este sinal significa ${q.answer}.',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            FilledButton(
-              onPressed: selected == null
-                  ? null
-                  : () {
-                      if (confirmed) {
-                        next(data);
-                      } else {
-                        setState(() => confirmed = true);
-                      }
-                    },
-              child: Text(
-                confirmed
-                    ? (answers.length == data.length - 1
-                          ? 'Ver resultado'
-                          : 'Próximo sinal')
-                    : 'Confirmar resposta',
+                  if (!confirmed)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 14),
+                      child: Text(
+                        'Pode tentar. Cada descoberta conta!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xff786e86),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ],
@@ -355,63 +295,114 @@ class _ResultPageState extends State<ResultPage> {
   }
 
   @override
-  Widget build(BuildContext context) => PageFrame(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Icon(Icons.emoji_events_outlined, size: 76, color: purple),
-        const SizedBox(height: 20),
-        Text(
-          'Treino concluído!',
-          style: Theme.of(context).textTheme.headlineMedium,
-          textAlign: TextAlign.center,
-        ),
-        Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            '${widget.result.score} de ${widget.result.total} acertos',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-          ),
-        ),
-        Text(
-          widget.result.review.isEmpty
-              ? 'Você reconheceu todos os sinais deste treino!'
-              : 'Sinais para revisar: ${widget.result.review.join(', ')}.',
-          style: const TextStyle(fontSize: 18),
-        ),
-        const SizedBox(height: 24),
-        if (saving) const LinearProgressIndicator(),
-        if (saved) const Notice('Resultado salvo no Cloud Firestore.'),
-        if (!widget.service.enabled)
-          const Notice(
-            'Resultado apenas nesta tela. Conecte o Firebase para salvar seu desempenho.',
-          ),
-        if (error != null) ...[
-          Notice(error!),
-          TextButton(
-            onPressed: saving ? null : save,
-            child: const Text('Tentar salvar novamente'),
-          ),
-        ],
-        const SizedBox(height: 24),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pushReplacement(
-            MaterialPageRoute<void>(
-              builder: (_) => QuizPage(results: widget.service),
+  Widget build(BuildContext context) => AppShell(
+    child: Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ResultCelebration(
+              score: widget.result.score,
+              total: widget.result.total,
             ),
-          ),
-          child: const Text('Treinar novamente'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pushReplacement(
-            MaterialPageRoute<void>(
-              builder: (_) => HistoryPage(results: widget.service),
+            const SizedBox(height: 24),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          widget.result.review.isEmpty
+                              ? Icons.verified_rounded
+                              : Icons.bookmark_outline_rounded,
+                          color: brand,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            widget.result.review.isEmpty
+                                ? 'Tudo reconhecido por aqui!'
+                                : 'Vamos dar mais uma olhada?',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      widget.result.review.isEmpty
+                          ? 'Continue praticando para fortalecer suas novas conexões.'
+                          : 'Estes são os sinais para revisar no próximo treino.',
+                      style: const TextStyle(color: Color(0xff786e86)),
+                    ),
+                    if (widget.result.review.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: widget.result.review
+                            .map(
+                              (word) => Pill(
+                                label: word,
+                                color: peach,
+                                icon: Icons.replay_rounded,
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
-          ),
-          child: const Text('Ver histórico'),
+            const SizedBox(height: 20),
+            if (saving) const LinearProgressIndicator(),
+            if (saved)
+              const Notice(
+                'Seu treino foi salvo! Ele já faz parte do seu histórico.',
+                success: true,
+              ),
+            if (!widget.service.enabled)
+              const Notice(
+                'Resultado apenas nesta tela. Conecte o Firebase para salvar seu desempenho.',
+              ),
+            if (error != null) ...[
+              Notice(error!),
+              TextButton(
+                onPressed: saving ? null : save,
+                child: const Text('Tentar salvar novamente'),
+              ),
+            ],
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context).pushReplacement(
+                MaterialPageRoute<void>(
+                  builder: (_) => QuizPage(results: widget.service),
+                ),
+              ),
+              icon: const Icon(Icons.replay_rounded),
+              label: const Text('Treinar novamente'),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).pushReplacement(
+                MaterialPageRoute<void>(
+                  builder: (_) => HistoryPage(results: widget.service),
+                ),
+              ),
+              icon: const Icon(Icons.insights_rounded),
+              label: const Text('Ver histórico'),
+            ),
+          ],
         ),
-      ],
+      ),
     ),
   );
 }
@@ -432,19 +423,35 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   @override
-  Widget build(BuildContext context) => PageFrame(
+  Widget build(BuildContext context) => AppShell(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: Pill(
+            label: 'APRENDIZADO EM MOVIMENTO',
+            color: mint,
+            icon: Icons.trending_up_rounded,
+          ),
+        ),
+        const SizedBox(height: 20),
         Text(
           'Cada treino conta.',
-          style: Theme.of(context).textTheme.headlineMedium,
+          style: Theme.of(context).textTheme.headlineMedium
+              ?.copyWith(fontSize: 36),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
+        const Text(
+          'Olhe para o que você já descobriu e encontre seu próximo passo.',
+          style: TextStyle(color: Color(0xff786e86)),
+        ),
+        const SizedBox(height: 8),
         const Text(
           'Histórico compartilhado da demonstração • últimos 20 treinos',
+          style: TextStyle(fontSize: 12, color: Color(0xff786e86)),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
         if (!widget.results.enabled)
           const Notice(
             'O histórico estará disponível depois de conectar o Firebase.',
@@ -463,32 +470,99 @@ class _HistoryPageState extends State<HistoryPage> {
               }
               if (snapshot.data!.isEmpty) {
                 return const Notice(
-                  'Nenhum treino salvo ainda. Complete seu primeiro treino!',
+                  'Sua jornada começa com um sinal. Complete seu primeiro treino para ver os resultados aqui!',
                 );
               }
+              final records = snapshot.data!;
               return Column(
-                children: snapshot.data!.map((result) {
-                  final date = result.date.toLocal();
-                  final stamp =
-                      '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')} • ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-                  return Card(
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(18),
-                      leading: const Icon(
-                        Icons.check_circle_outline,
-                        color: purple,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  HistorySummary(
+                    count: records.length,
+                    hits: records.fold(0, (sum, item) => sum + item.score),
+                    total: records.fold(0, (sum, item) => sum + item.total),
+                  ),
+                  const SizedBox(height: 28),
+                  const Text(
+                    'Treinos recentes',
+                    style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 14),
+                  ...records.map((result) {
+                    final date = result.date.toLocal();
+                    final stamp =
+                        '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')} • ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 56,
+                              height: 56,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: result.review.isEmpty ? mint : lavender,
+                                borderRadius: BorderRadius.circular(17),
+                              ),
+                              child: Text(
+                                '${result.score}/${result.total}',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  color: darkInk,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 18),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    result.review.isEmpty
+                                        ? 'Todos os sinais reconhecidos!'
+                                        : 'Mais um passo na sua jornada',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    stamp,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xff786e86),
+                                    ),
+                                  ),
+                                  if (result.review.isNotEmpty) ...[
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      'Revisar: ${result.review.join(', ')}',
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            if (MediaQuery.sizeOf(context).width > 500)
+                              Icon(
+                                result.review.isEmpty
+                                    ? Icons.workspace_premium_rounded
+                                    : Icons.eco_outlined,
+                                color: result.review.isEmpty
+                                    ? const Color(0xff397e64)
+                                    : brand,
+                              ),
+                          ],
+                        ),
                       ),
-                      title: Text(
-                        '${result.score}/${result.total} acertos • $stamp',
-                      ),
-                      subtitle: Text(
-                        result.review.isEmpty
-                            ? 'Todos os sinais reconhecidos.'
-                            : 'Revisar: ${result.review.join(', ')}',
-                      ),
-                    ),
-                  );
-                }).toList(),
+                    );
+                  }),
+                ],
               );
             },
           ),
@@ -506,14 +580,33 @@ class _HistoryPageState extends State<HistoryPage> {
 
 class Notice extends StatelessWidget {
   final String message;
-  const Notice(this.message, {super.key});
+  final bool success;
+  const Notice(this.message, {super.key, this.success = false});
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
-      color: const Color(0xffebe7f7),
-      borderRadius: BorderRadius.circular(16),
+      color: success ? mint : lavender,
+      borderRadius: BorderRadius.circular(18),
     ),
-    child: Text(message, style: const TextStyle(color: ink, height: 1.5)),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          success
+              ? Icons.check_circle_outline_rounded
+              : Icons.info_outline_rounded,
+          color: success ? const Color(0xff397e64) : brand,
+          size: 22,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            message,
+            style: const TextStyle(color: darkInk, height: 1.5),
+          ),
+        ),
+      ],
+    ),
   );
 }

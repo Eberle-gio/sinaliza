@@ -12,7 +12,13 @@ service cloud.firestore {
           && d.total == 5 && d.score is int && d.score >= 0 && d.score <= 5
           && d.review is list && d.review.size() == 5 - d.score
           && d.review.toSet().size() == d.review.size()
-          && d.review.toSet().hasOnly(['Abacaxi', 'Casa', 'Gato', 'Escola', 'Livro'])
+          && d.review.toSet().hasOnly([
+            'Abacaxi', 'Água', 'Banana', 'Bicicleta', 'Cachorro',
+            'Cadeira', 'Caderno', 'Café', 'Caneta', 'Carro',
+            'Casa', 'Cavalo', 'Coelho', 'Escola', 'Gato',
+            'Hospital', 'Lápis', 'Laranja', 'Leite', 'Livro',
+            'Abelha', 'Mercado', 'Pão', 'Professor', 'Trem'
+          ])
           && d.date is timestamp && d.date <= request.time
           && d.date > request.time - duration.value(1, 'h');
       }

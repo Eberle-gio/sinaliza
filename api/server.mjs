@@ -1,16 +1,29 @@
 import { createServer } from 'node:http';
 import { pathToFileURL } from 'node:url';
+import { randomInt } from 'node:crypto';
+import { catalog } from './catalog.mjs';
 
-const source = 'https://dicionario.ines.gov.br/';
-const videoBase = `${source}public/media/palavras/videos/`;
-// Nomes conferidos no catálogo público do INES. Vídeos hospedados na fonte original.
-export const questions = [
-  { id: 'ines-5', video: 'abacaxiSm_Prog001.mp4', options: ['Banana', 'Abacaxi', 'Maçã'], correctIndex: 1 },
-  { id: 'ines-1186', video: 'casaSm_Prog001.mp4', options: ['Casa', 'Escola', 'Hospital'], correctIndex: 0 },
-  { id: 'ines-2706', video: 'gatoSm_Prog001.mp4', options: ['Cachorro', 'Pássaro', 'Gato'], correctIndex: 2 },
-  { id: 'ines-2213', video: 'escolaSm_Prog001.mp4', options: ['Escola', 'Mercado', 'Praça'], correctIndex: 0 },
-  { id: 'ines-3347', video: 'livroSm_Prog001.mp4', options: ['Caneta', 'Livro', 'Caderno'], correctIndex: 1 },
-].map(({ video, ...question }) => ({ ...question, videoUrl: videoBase + video, source }));
+function shuffle(items, randomIndex) {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = randomIndex(i + 1);
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+// Sorteia sem repetição no treino e sem os cinco IDs do treino anterior.
+export function selectQuestions(excludedIds = [], randomIndex = randomInt) {
+  const available = catalog.filter(item => !excludedIds.includes(item.id));
+  if (available.length < 5) throw new RangeError('Poucos sinais disponíveis');
+  return shuffle(available, randomIndex).slice(0, 5).map(item => {
+    const options = shuffle([item.answer, ...item.distractors], randomIndex);
+    return {
+      id: item.id, videoUrl: item.videoUrl, source: item.source,
+      options, correctIndex: options.indexOf(item.answer),
+    };
+  });
+}
 
 export function makeServer() {
   return createServer((request, response) => {
@@ -25,8 +38,15 @@ export function makeServer() {
     if (!allowed) return send(403, { error: 'Origem não autorizada' });
     if (request.method === 'OPTIONS') { response.writeHead(204); return response.end(); }
     if (request.method !== 'GET') { response.setHeader('Allow', 'GET, OPTIONS'); return send(405, { error: 'Método não permitido' }); }
-    const path = new URL(request.url, 'http://localhost').pathname;
-    if (path === '/questions') return send(200, questions);
+    const url = new URL(request.url, 'http://localhost');
+    const path = url.pathname;
+    if (path === '/questions') {
+      const excluded = [...new Set((url.searchParams.get('exclude') || '').split(',').filter(Boolean))];
+      if (excluded.length > 5 || excluded.some(id => !catalog.some(item => item.id === id))) {
+        return send(400, { error: 'Informe até cinco IDs válidos em exclude' });
+      }
+      return send(200, selectQuestions(excluded));
+    }
     if (path === '/health') return send(200, { status: 'ok' });
     return send(404, { error: 'Rota não encontrada' });
   });

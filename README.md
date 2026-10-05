@@ -1,8 +1,21 @@
 # Sinaliza — Treino de Libras
 
-Atividade individual em Flutter Web: cinco exercícios de reconhecimento de sinais,
+Atividade individual em Flutter Web: cinco exercícios sorteados de um catálogo de 25 sinais,
 feedback por resposta, resultado com sinais para revisar e histórico no Cloud Firestore.
 Não usa Realtime Database nem Authentication.
+
+## Treinos variados
+
+A API sorteia cinco sinais distintos e embaralha suas alternativas em cada chamada.
+O Flutter envia os IDs do último treino em `GET /questions?exclude=id1,id2,...`:
+enquanto o app estiver aberto, o próximo treino não repete esses cinco sinais.
+Sinais mais antigos podem reaparecer. Recarregar o navegador limpa essa memória.
+O catálogo inclui alimentos, animais, objetos, lugares, transportes e professor.
+
+**Ao atualizar uma instalação anterior:** reinicie a API e o Flutter e publique
+novamente `firestore.rules` em **Firestore > Regras** no console. A regra antiga
+permite apenas cinco nomes, então bloquearia resultados que tenham novos sinais
+na lista de revisão. Os resultados anteriores continuam compatíveis.
 
 ## Rodar no navegador
 
@@ -68,7 +81,8 @@ nem publique como serviço privado. Para perfis individuais, adicione autentica�
 
 ## Integrações e arquivos para explicar
 
-- `api/server.mjs`: API própria Node que retorna cinco perguntas em JSON.
+- `api/catalog.mjs`: catálogo de 25 sinais e seus vídeos de referência.
+- `api/server.mjs`: API própria Node que sorteia cinco perguntas em JSON.
 - `lib/services.dart`, `QuestionService.fetch`: HTTP, JSON e modelos.
 - `lib/services.dart`, `ResultService.save/list`: gravação e consulta no Firestore.
 - `lib/main.dart`: telas inicial, exercício, resultado e histórico.
@@ -82,7 +96,7 @@ Não há banco local simulando o Firestore. Erros de API, vídeo, leitura e grav
 [Dicionário da Língua Brasileira de Sinais — INES / Acessibilidade Brasil](https://dicionario.ines.gov.br/).
 Autores creditados na fonte: Guilherme de Azambuja Lira e Tanya Amara Felipe de Souza.
 Os vídeos permanecem no servidor original; a API guarda apenas seus links.
-Catálogo consultado: `public/site/js/palavras.js`, entradas 5, 1186, 2706, 2213 e 3347.
+Catálogo consultado: `public/site/js/palavras.js`; IDs e nomes constam em `api/catalog.mjs`.
 O material serve para reconhecimento inicial e não substitui um curso de Libras.
 
 ## Roteiro para cinco minutos
@@ -101,6 +115,9 @@ flutter analyze
 flutter test
 flutter build web
 ```
+
+Para conferir os links dos vídeos na fonte original: `node api/check-videos.mjs`
+(requer internet; separado dos testes locais).
 
 Para publicar futuramente, hospede a API em HTTPS, configure `APP_ORIGIN` com a origem
 do site e compile com `--dart-define=API_BASE_URL=https://sua-api`. O servidor atual
